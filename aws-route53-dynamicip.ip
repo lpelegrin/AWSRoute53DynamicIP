@@ -1,0 +1,55 @@
+import boto3
+import requests
+import time
+import os
+
+
+#AWS_ACCESS_KEY_ID
+#AWS_SECRET_ACCESS_KEY 
+AWS_DOMAIN_ID = os.environ['AWS_DOMAIN_ID'] 
+AWS_DOMAIN_RECORD = os.environ['AWS_DOMAIN_RECORD'] 
+R53Client = boto3.client('route53')
+
+def GetCurrentPublicIP():
+    return requests.get('http://ip.42.pl/raw').text
+
+def GetRoute53RecordValue(hostedZoneID, domain):
+    response = R53Client.list_resource_record_sets(HostedZoneId=hostedZoneID)
+    for record in response['ResourceRecordSets']:
+        if domain in record['Name']:
+            return record['ResourceRecords'][0]['Value']
+
+def UpsertRoute53RecordValue(hostedZoneID, domain, ip_value, ttl=None):
+    record_name = None
+    response = R53Client.list_resource_record_sets(HostedZoneId=hostedZoneID)
+    for record in response['ResourceRecordSets']:
+        if domain in record['Name']:
+            record_name = record['Name']
+            if ttl is None:
+                ttl = record['TTL']
+    Response = R53Client.change_resource_record_sets(
+        HostedZoneId=hostedZoneID,
+        ChangeBatch={
+            'Changes':[
+                {'Action': 'UPSERT',
+                'ResourceRecordSet': {
+                    'Name': record_name,
+                    'Type': 'A',
+                    'ResourceRecords': 
+                [{'Value':ip_value}],'TTL': ttl}}]})
+
+if __name__ == '__main__':
+    ip_public = GetCurrentPublicIP()
+    my_dns_record = GetRoute53RecordValue(AWS_DOMAIN_ID,AWS_DOMAIN_RECORD)
+    dns_missmatch = ip_public != my_dns_record
+    if dns_missmatch:
+        UpsertRoute53RecordValue(AWS_DOMAIN_ID,AWS_DOMAIN_RECORD,ip_public)
+    while(1):
+        time.sleep(60)
+        ip_public = GetCurrentPublicIP()
+        if ip_public != my_dns_record:
+            my_dns_record = ip_public
+            UpsertRoute53RecordValue(AWS_DOMAIN_ID,AWS_DOMAIN_RECORD,ip_public)
+
+
+
