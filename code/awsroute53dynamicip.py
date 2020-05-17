@@ -23,7 +23,7 @@ class AWSRoute53DynamicIP:
 
         # Parse inputs 
         if self.route53_arn_id == "":
-            raise ValueError('AWS_ROUTE53_ARN environment variable is empty ')
+            raise ValueError('AWS_ROUTE53_HZ_ARN environment variable is empty ')
         if self.route53_records == "":
             raise ValueError('AWS_ROUTE53_RECORDS environment variable is empty')
 
