@@ -9,16 +9,16 @@ class AWSRoute53DynamicIP:
     route53_arn_id = ""
     route53_records = ""
     loop_time = None
+    default_ttl = None
     debug = False
-    default_ttl = 120
     pub_ip = ""
 
     def __init__(self):
         # Get Input from environment variables
         self.route53_arn_id  = os.getenv("AWS_ROUTE53_HZ_ARN", "")
         self.route53_records = os.getenv("AWS_ROUTE53_RECORDS", "")
-        self.default_ttl = int(os.getenv("AWS_ROUTE53_TTL", "300"))
-        self.loop_time = int(os.getenv("LOOP_TIME", 300))
+        self.default_ttl = int(os.getenv("AWS_ROUTE53_TTL", 120))
+        self.loop_time = int(os.getenv("LOOP_TIME", 120))
         self.debug = bool(os.getenv("DEBUG", False))
 
         # Parse inputs 
